@@ -187,7 +187,37 @@ LLM xử lý toán trên các token, không phải trên từng chữ số → d
 
 ---
 
-### ❓ Câu 9: Chi phí API được tính như thế nào?
+### ❓ Câu 9: LLM đời mới (GPT-4o, Claude 3.5) fix vấn đề đếm chữ cái bằng cách nào?
+
+<details>
+<summary>👉 Xem đáp án</summary>
+
+Các LLM đời mới sử dụng **3 kỹ thuật chính**:
+
+**1. Chain-of-Thought (Suy luận từng bước)**
+```
+Bước 1: Liệt kê từng chữ: s-t-r-a-w-b-e-r-r-y
+Bước 2: Đánh dấu chữ 'r': s-t-[r]-a-w-b-e-[r]-[r]-y
+Bước 3: Đếm: 3 chữ 'r'
+```
+
+**2. Tool Use (Sử dụng công cụ)**
+- LLM gọi code Python để đếm chính xác:
+```python
+"strawberry".count('r')  # → 3
+```
+
+**3. Training tốt hơn**
+- Được train với nhiều bài toán character-level
+- Học cách "phân tích" token thành từng chữ cái khi cần
+
+**Kết quả:** GPT-4o, Claude 3.5, Gemini 1.5 đều trả lời đúng "3 chữ r"!
+
+</details>
+
+---
+
+### ❓ Câu 10: Chi phí API được tính như thế nào?
 
 <details>
 <summary>👉 Xem đáp án</summary>
