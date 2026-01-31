@@ -22,7 +22,7 @@ client = AsyncAzureOpenAI(
 )
 
 # 2. Hàm gửi request đơn lẻ (bất đồng bộ)
-async def ask_llm_async(question_id, question):
+async def ask_llm_async(question_id : int, question : str):
     print(f"➡️ [Task {question_id}] Bắt đầu gửi: '{question}'...")
     start_time = time.time()
     
