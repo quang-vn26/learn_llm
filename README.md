@@ -1,8 +1,156 @@
 # 🎓 Learn AI - Ôn tập kiến thức
 
+## 🤖 LLM & Transformer Cơ bản
+
+### ❓ Câu 1: LLM viết tắt của từ gì?
+
+<details>
+<summary>👉 Xem đáp án</summary>
+
+**LLM = Large Language Model** (Mô hình Ngôn ngữ Lớn)
+
+| Thành phần | Ý nghĩa |
+|------------|---------|
+| **Large** | Lớn - hàng tỷ tham số (parameters), được train trên lượng dữ liệu khổng lồ |
+| **Language** | Ngôn ngữ - hiểu và sinh ra văn bản của con người |
+| **Model** | Mô hình - thuật toán AI được huấn luyện |
+
+**Ví dụ các LLM phổ biến:**
+- GPT-4, GPT-4o (OpenAI)
+- Claude 3.5 Sonnet (Anthropic)
+- Gemini 1.5, Gemini 2.0 (Google)
+- Llama 3 (Meta)
+
+**LLM làm được gì?**
+- Trả lời câu hỏi, viết văn bản
+- Dịch thuật, tóm tắt
+- Viết code, sửa lỗi
+- Phân tích dữ liệu
+
+</details>
+
+---
+
+### ❓ Câu 2: Cơ chế chính của Transformer là gì?
+
+<details>
+<summary>👉 Xem đáp án</summary>
+
+**Self-Attention** (Cơ chế Tự Chú Ý) là trái tim của kiến trúc Transformer!
+
+**Self-Attention là gì?**
+
+Nó cho phép mỗi từ trong câu "nhìn" và "chú ý" đến tất cả các từ khác để hiểu ngữ cảnh.
+
+**Ví dụ minh họa:**
+
+```
+Câu: "Con mèo đuổi con chuột vì nó đói"
+                                  ↓
+                          "nó" chỉ ai?
+```
+
+Self-Attention giúp model hiểu được "nó" chỉ **"con mèo"** (vì mèo mới đói và đuổi chuột).
+
+**Cách hoạt động đơn giản:**
+
+```
+Bước 1: Mỗi từ tạo ra 3 vector: Query (Q), Key (K), Value (V)
+Bước 2: Tính độ "liên quan" giữa các từ: Q × K
+Bước 3: Dùng độ liên quan làm trọng số để kết hợp các Value
+```
+
+| Từ | Chú ý nhiều đến | Lý do |
+|----|-----------------|-------|
+| "nó" | "mèo" (80%), "chuột" (15%) | Ngữ cảnh "đuổi" và "đói" |
+| "đuổi" | "mèo" (70%), "chuột" (25%) | Mèo là chủ thể hành động |
+
+**Tại sao Self-Attention mạnh?**
+- Hiểu được ngữ cảnh xa (không giới hạn khoảng cách từ)
+- Xử lý song song (nhanh hơn RNN/LSTM)
+- Linh hoạt với nhiều loại quan hệ
+
+</details>
+
+---
+
+### ❓ Câu 3: Tokenization là gì?
+
+<details>
+<summary>👉 Xem đáp án</summary>
+
+**Tokenization** là quá trình **chia văn bản thành các mảnh nhỏ (tokens)** để LLM có thể xử lý.
+
+**Tại sao cần Tokenization?**
+
+LLM không thể đọc text trực tiếp! Nó cần chuyển text → số (token IDs).
+
+```
+"Hello World" → [15496, 2159] → LLM xử lý → [Output IDs] → "Xin chào"
+```
+
+**Ví dụ Tokenization thực tế:**
+
+| Văn bản | Tokens | Số lượng |
+|---------|--------|----------|
+| `"Hello"` | `["Hello"]` | 1 token |
+| `"Hello World"` | `["Hello", " World"]` | 2 tokens |
+| `"Xin chào"` | `["X", "in", " ch", "ào"]` | 4 tokens |
+| `"GPT-4"` | `["G", "PT", "-", "4"]` | 4 tokens |
+| `"strawberry"` | `["st", "raw", "berry"]` | 3 tokens |
+
+**Quy luật tokenization:**
+```python
+# Từ phổ biến → ít tokens
+"the"        → ["the"]           # 1 token
+"computer"   → ["computer"]       # 1 token
+
+# Từ hiếm hoặc tiếng Việt → nhiều tokens hơn
+"Việt Nam"   → ["Vi", "ệt", " Nam"]  # 3 tokens
+"Lập trình"  → ["L", "ập", " tr", "ình"]  # 4 tokens
+```
+
+**Code demo:**
+```python
+import tiktoken
+
+encoder = tiktoken.encoding_for_model("gpt-4")
+
+text = "Xin chào Việt Nam!"
+tokens = encoder.encode(text)
+
+print(f"Text: {text}")
+print(f"Token IDs: {tokens}")
+print(f"Số tokens: {len(tokens)}")
+
+# Xem từng token là gì
+for token_id in tokens:
+    print(f"  {token_id} → '{encoder.decode([token_id])}'")
+```
+
+**Output:**
+```
+Text: Xin chào Việt Nam!
+Token IDs: [55, 258, 559, 3975, 79136, 23561, 0]
+Số tokens: 7
+  55 → 'X'
+  258 → 'in'
+  559 → ' ch'
+  3975 → 'ào'
+  79136 → ' Vi'
+  23561 → 'ệt'
+  ...
+```
+
+**💡 Ghi nhớ:** Tiếng Việt tốn nhiều tokens hơn tiếng Anh → chi phí API cao hơn!
+
+</details>
+
+---
+
 ## 📚 Python Async/Await
 
-### ❓ Câu 1: Sự khác biệt giữa Sync và Async là gì?
+### ❓ Câu 4: Sự khác biệt giữa Sync và Async là gì?
 
 <details>
 <summary>👉 Xem đáp án</summary>
@@ -27,7 +175,7 @@ Tổng: ~5 giây (bằng task lâu nhất)
 
 ---
 
-### ❓ Câu 2: Tại sao gọi hàm `async` mà nó không chạy ngay?
+### ❓ Câu 5: Tại sao gọi hàm `async` mà nó không chạy ngay?
 
 ```python
 async def say_hello():
@@ -52,7 +200,7 @@ Khi định nghĩa hàm với `async def`, Python biến nó thành **coroutine 
 
 ---
 
-### ❓ Câu 3: Làm sao để coroutine THỰC SỰ chạy?
+### ❓ Câu 6: Làm sao để coroutine THỰC SỰ chạy?
 
 <details>
 <summary>👉 Xem đáp án</summary>
@@ -76,7 +224,7 @@ await asyncio.gather(task1, task2, task3)  # ✅ CHẠY TẤT CẢ
 
 ---
 
-### ❓ Câu 4: Đoạn code này làm gì? Tại sao CHƯA chạy ngay?
+### ❓ Câu 7: Đoạn code này làm gì? Tại sao CHƯA chạy ngay?
 
 ```python
 tasks = [
@@ -100,7 +248,7 @@ tasks = [
 
 ---
 
-### ❓ Câu 5: `asyncio.gather(*tasks)` hoạt động như thế nào?
+### ❓ Câu 8: `asyncio.gather(*tasks)` hoạt động như thế nào?
 
 <details>
 <summary>👉 Xem đáp án</summary>
@@ -122,7 +270,7 @@ results = await asyncio.gather(*tasks)
 
 ## 🔤 Tokenization (Ngày 1)
 
-### ❓ Câu 6: Token là gì? LLM có hiểu "từ" không?
+### ❓ Câu 9: Token là gì? LLM có hiểu "từ" không?
 
 <details>
 <summary>👉 Xem đáp án</summary>
@@ -140,7 +288,7 @@ Token có thể là:
 
 ---
 
-### ❓ Câu 7: Tại sao LLM thường tính toán sai?
+### ❓ Câu 10: Tại sao LLM thường tính toán sai?
 
 ```python
 "12345"    → ['123', '45']      # 2 tokens
@@ -163,7 +311,7 @@ LLM xử lý toán trên các token, không phải trên từng chữ số → d
 
 ---
 
-### ❓ Câu 8: Tại sao LLM đếm sai số chữ 'r' trong "strawberry"?
+### ❓ Câu 11: Tại sao LLM đếm sai số chữ 'r' trong "strawberry"?
 
 <details>
 <summary>👉 Xem đáp án</summary>
@@ -187,7 +335,7 @@ LLM xử lý toán trên các token, không phải trên từng chữ số → d
 
 ---
 
-### ❓ Câu 9: LLM đời mới (GPT-4o, Claude 3.5) fix vấn đề đếm chữ cái bằng cách nào?
+### ❓ Câu 12: LLM đời mới (GPT-4o, Claude 3.5) fix vấn đề đếm chữ cái bằng cách nào?
 
 <details>
 <summary>👉 Xem đáp án</summary>
@@ -217,7 +365,7 @@ Bước 3: Đếm: 3 chữ 'r'
 
 ---
 
-### ❓ Câu 10: Chi phí API được tính như thế nào?
+### ❓ Câu 13: Chi phí API được tính như thế nào?
 
 <details>
 <summary>👉 Xem đáp án</summary>
