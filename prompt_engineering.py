@@ -10,6 +10,7 @@ Script này demo 3 kỹ thuật Prompt Engineering:
 """
 
 import os
+import sys
 import time
 from dotenv import load_dotenv
 from openai import AzureOpenAI
@@ -23,6 +24,27 @@ client = AzureOpenAI(
     api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
 )
 deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT")
+
+LOG_FILE = os.path.join(os.path.dirname(__file__), "prompt_engineering_log.txt")
+
+
+class TeeWriter:
+    """Ghi output ra cả console LẪN file cùng lúc."""
+    def __init__(self, filepath):
+        self.terminal = sys.stdout
+        self.file = open(filepath, "w", encoding="utf-8")
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.file.write(message)
+
+    def flush(self):
+        self.terminal.flush()
+        self.file.flush()
+
+    def close(self):
+        self.file.close()
+        sys.stdout = self.terminal
 
 
 # ─── Helper: gọi LLM và in kết quả ────────────────────────
@@ -42,7 +64,6 @@ def ask(technique_name: str, messages: list[dict]) -> str:
     response = client.chat.completions.create(
         model=deployment,
         messages=messages,
-        temperature=0.3,  # Giữ output ổn định để so sánh
     )
     duration = time.time() - start
 
@@ -203,6 +224,10 @@ def demo_cot_comparison():
 # 🏁 MAIN
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if __name__ == "__main__":
+    # Ghi log ra file (ghi đè mỗi lần chạy)
+    tee = TeeWriter(LOG_FILE)
+    sys.stdout = tee
+
     print("🧠 PROMPT ENGINEERING AS CODE")
     print("=" * 60)
     print("Prompt không phải là văn xuôi, nó là LOGIC!")
@@ -239,3 +264,7 @@ if __name__ == "__main__":
   • CoT tốn nhiều token nhất nhưng chính xác nhất cho logic
   • Có thể KẾT HỢP: Few-shot + CoT = combo mạnh nhất!
 """)
+
+    # Đóng log file
+    tee.close()
+    print(f"📄 Log đã được lưu tại: {LOG_FILE}")
