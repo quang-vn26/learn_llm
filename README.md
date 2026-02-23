@@ -892,15 +892,100 @@ messages = [
 
 ---
 
+### 📌 Thứ 5 - Thứ 7: Quản lý Context Window (Cửa sổ ngữ cảnh)
+
+**Vấn đề:** Nếu chat mãi, history sẽ quá dài và vượt quá giới hạn token của model (ví dụ 4096 tokens).
+
+**Thực hành:** Viết hàm `trim_history(history, max_tokens)`.
+
+**Logic:** Nếu tổng token > max, hãy xóa các tin nhắn cũ nhất (giữ lại System Prompt ban đầu). Đây là thuật toán **FIFO** (First-In-First-Out) đơn giản nhưng hiệu quả.
+
+#### ❓ Câu 24: Viết hàm trim_history với thuật toán FIFO?
+
+<details>
+<summary>👉 Xem đáp án</summary>
+
+**Vấn đề:** History tăng dần theo cuộc trò chuyện → tốn token → tốn tiền → có thể vượt context window.
+
+**Thuật toán FIFO (suy nghĩ từng bước):**
+```
+Bước 1: Đếm tổng token của history
+Bước 2: Nếu <= max_tokens → giữ nguyên
+Bước 3: Tách system message ra (luôn giữ!)
+Bước 4: Xóa tin nhắn CŨ NHẤT trong conversation
+Bước 5: Lặp lại Bước 1-4 cho đến khi đủ nhỏ
+```
+
+**Code:**
+```python
+import tiktoken
+
+encoding = tiktoken.encoding_for_model("gpt-4o")
+
+def count_tokens(messages: list[dict]) -> int:
+    """Đếm tổng token của messages."""
+    total = 0
+    for msg in messages:
+        total += 4  # overhead mỗi message
+        total += len(encoding.encode(msg["content"]))
+    total += 2  # overhead response
+    return total
+
+def trim_history(history: list[dict], max_tokens: int) -> list[dict]:
+    """
+    Cắt history bằng FIFO: xóa tin cũ nhất, giữ system + tin mới.
+    """
+    if count_tokens(history) <= max_tokens:
+        return history
+
+    # Luôn giữ system message
+    system_msg = [history[0]] if history[0]["role"] == "system" else []
+    conversation = history[1:] if system_msg else history[:]
+
+    # FIFO: xóa tin cũ nhất cho đến khi đủ nhỏ
+    while conversation and count_tokens(system_msg + conversation) > max_tokens:
+        conversation.pop(0)  # Xóa tin cũ nhất
+
+    return system_msg + conversation
+```
+
+**Ví dụ:**
+```python
+history = [
+    {"role": "system", "content": "Bạn là trợ lý AI."},
+    {"role": "user", "content": "Câu hỏi cũ 1"},      # ← bị xóa
+    {"role": "assistant", "content": "Trả lời cũ 1"},   # ← bị xóa
+    {"role": "user", "content": "Câu hỏi cũ 2"},      # ← bị xóa
+    {"role": "assistant", "content": "Trả lời cũ 2"},   # ← bị xóa
+    {"role": "user", "content": "Câu hỏi MỚI"},       # ← GIỮ LẠI
+]
+
+trimmed = trim_history(history, max_tokens=100)
+# Kết quả: [system_msg, "Câu hỏi MỚI"]  ← Giữ system + tin mới nhất
+```
+
+| Chiến lược | Cách hoạt động | Độ phức tạp |
+|-----------|---------------|-------------|
+| **FIFO (bài này)** | Xóa tin cũ nhất | ⭐ Đơn giản |
+| **Sliding Window** | Giữ N tin gần nhất | ⭐ Đơn giản |
+| **Summarization** | Tóm tắt tin cũ bằng LLM | ⭐⭐⭐ Nâng cao |
+| **Token-based trim** | Dùng `truncate_text` (Tuần 2) | ⭐⭐ Vừa |
+
+</details>
+
+---
+
 ## 📁 Files trong project
 
 | File | Mô tả | Tuần |
 |------|-------|------|
-| `hello_llm.py` | Demo gọi Azure OpenAI cơ bản (sync) - "Phá vỡ hộp đen" JSON response | Tuần 1 |
-| `async_llm.py` | Demo gọi Azure OpenAI bất đồng bộ (async) với `asyncio.gather()` | Tuần 1 |
-| `token_kung_fu.py` | Demo tokenization - cách LLM "nhìn" văn bản, tính chi phí | Tuần 2 |
-| `prompt_engineering.py` | Demo 3 kỹ thuật prompting: Zero-shot, Few-shot, CoT | Tuần 2 |
+| `hello_llm.py` | Gọi Azure OpenAI cơ bản (sync) - phân tích JSON response | Tuần 1 |
+| `async_llm.py` | Gọi Azure OpenAI bất đồng bộ với `asyncio.gather()` | Tuần 1 |
+| `retry_wrapper.py` | Exponential backoff - retry API thông minh (manual + tenacity) | Tuần 1 |
+| `token_kung_fu.py` | Tokenization + `truncate_text()` - cắt văn bản theo token | Tuần 2 |
+| `prompt_engineering.py` | 3 kỹ thuật prompting: Zero-shot, Few-shot, CoT | Tuần 2 |
 | `prompt_engineering_log.txt` | Log output từ `prompt_engineering.py` | Tuần 2 |
+| `chat_memory.py` | Bộ nhớ hội thoại + `trim_history()` FIFO | Tuần 3 |
 | `list_models.py` | Liệt kê các models có sẵn trên Azure OpenAI | - |
 | `models.txt` | Danh sách models đã liệt kê | - |
 
