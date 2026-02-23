@@ -975,6 +975,156 @@ trimmed = trim_history(history, max_tokens=100)
 
 ---
 
+## 📅 TUẦN 4: Milestone Project - Console Chatbot Hoàn chỉnh
+
+> **Mục tiêu:** Kết hợp tất cả kiến thức Tuần 1-3 thành một sản phẩm chạy được trên Terminal.
+>
+> **Sản phẩm:** Ứng dụng Python CLI chatbot có bộ nhớ, retry, và quản lý token.
+
+### 📌 Thứ 2 - Thứ 4: Code tích hợp (Integration)
+
+**Thực hành:** Ghép Async API (Tuần 1), quản lý Token (Tuần 2) và quản lý bộ nhớ (Tuần 3) vào một ứng dụng. Xử lý ngoại lệ (mất mạng, hết tiền API).
+
+**Tính năng chatbot:**
+- ✅ Chat liên tục với ngữ cảnh (AI nhớ cuộc trò chuyện)
+- ✅ Lệnh `/clear` xóa bộ nhớ
+- ✅ Lệnh `/stats` hiển thị token đã dùng
+- ✅ Lệnh `/history` xem lịch sử
+- ✅ Hiển thị token sau mỗi lần chat (debug)
+- ✅ Auto-retry khi API lỗi (exponential backoff)
+- ✅ Auto-trim history khi vượt context window (FIFO)
+
+#### ❓ Câu 25: Tại sao cần tách code thành modules?
+
+<details>
+<summary>👉 Xem đáp án</summary>
+
+**Separation of Concerns** — Mỗi module làm một việc duy nhất:
+
+```
+chatbot/
+├── __init__.py        # Package marker
+├── utils.py           # Đếm token, truncate text
+├── llm_client.py      # Gọi API với retry
+├── memory.py          # Quản lý history (OOP)
+└── main.py            # CLI chatbot (entry point)
+```
+
+| Module | Trách nhiệm | Kiến thức từ |
+|--------|-------------|-------------|
+| `utils.py` | Đếm token, cắt text | Tuần 2 |
+| `llm_client.py` | Gọi API + retry | Tuần 1 |
+| `memory.py` | History + FIFO trim | Tuần 3 |
+| `main.py` | CLI loop + commands | Tuần 4 |
+
+**Lợi ích (Java dev sẽ quen):**
+- Dễ test từng phần riêng lẻ
+- Dễ thay đổi (đổi API provider? Chỉ sửa `llm_client.py`)
+- Code sạch, dễ đọc
+
+</details>
+
+---
+
+### 📌 Thứ 5 - Thứ 6: Tinh chỉnh (Refactoring)
+
+**Thực hành:** Tách code thành modules: `llm_client.py` (gọi API), `memory.py` (quản lý list), `utils.py` (đếm token). Cấu trúc code theo hướng OOP gọn gàng.
+
+#### ❓ Câu 26: ChatMemory class hoạt động thế nào? (OOP approach)
+
+<details>
+<summary>👉 Xem đáp án</summary>
+
+**Từ functional (Tuần 3) → OOP (Tuần 4):**
+
+```python
+# Tuần 3: Functional (list + functions)
+history = [{"role": "system", "content": "..."}]
+history.append({"role": "user", "content": "Hỏi gì đó"})
+trimmed = trim_history(history, max_tokens=3000)
+
+# Tuần 4: OOP (class đóng gói tất cả)
+memory = ChatMemory(system_prompt="...", max_tokens=3000)
+memory.add_user_message("Hỏi gì đó")
+memory.trim()  # Tự xử lý nội bộ
+print(memory.get_stats())  # Thống kê
+```
+
+**ChatMemory class:**
+```python
+class ChatMemory:
+    def __init__(self, system_prompt, max_tokens=3000):
+        self.history = [{"role": "system", "content": system_prompt}]
+        self.max_tokens = max_tokens
+        self._total_tokens_used = 0
+
+    def add_user_message(self, content): ...
+    def add_assistant_message(self, content): ...
+    def trim(self) -> int:     # FIFO, trả về số msg đã xóa
+    def clear(self):           # Reset, giữ system prompt
+    def get_messages(self):    # Trả về list để gửi API
+    def get_stats(self) -> str # Thống kê token
+```
+
+**Tại sao OOP ở đây tốt hơn?**
+- Đóng gói state (history + token count) lại với nhau
+- Không bị leak state ra ngoài
+- Dễ mở rộng (thêm summarization, persistence...)
+
+</details>
+
+---
+
+### 📌 Thứ 7: Review & Demo
+
+**Kiểm tra:** Chạy thử với các kịch bản khó:
+- Chat dài 20 câu → xem có trim history đúng không?
+- Gõ `/clear` → AI có quên hết không?
+- Gõ `/stats` → token có tăng dần đúng không?
+
+#### ❓ Câu 27: Cách chạy chatbot + test các kịch bản?
+
+<details>
+<summary>👉 Xem đáp án</summary>
+
+**Chạy chatbot:**
+```bash
+# Từ thư mục gốc project
+python -m chatbot.main
+```
+
+**Kịch bản test:**
+```
+👤 Bạn: Tôi tên Quang, tôi là Java developer
+🤖 AI: Chào Quang! ...
+
+👤 Bạn: Tôi đang học gì?
+🤖 AI: (Phải nhớ context) ...
+
+👤 Bạn: /stats
+📊 Messages: 4 | Context: ~150 tokens | Tổng: 280 tokens
+
+👤 Bạn: /clear
+🗑️ Đã xóa bộ nhớ!
+
+👤 Bạn: Tôi tên gì?
+🤖 AI: Tôi không biết tên bạn. ← Đúng! Đã quên.
+
+👤 Bạn: /quit
+👋 Tạm biệt! Tổng token đã dùng: 450
+```
+
+**Tự đánh giá:**
+- ✅ AI có nhớ ngữ cảnh trước đó?
+- ✅ `/clear` có thực sự xóa bộ nhớ?
+- ✅ Token count có tăng hợp lý?
+- ✅ Khi chat dài, FIFO trim có hoạt động?
+- ✅ Khi API lỗi, retry có kick in?
+
+</details>
+
+---
+
 ## 📁 Files trong project
 
 | File | Mô tả | Tuần |
@@ -986,6 +1136,10 @@ trimmed = trim_history(history, max_tokens=100)
 | `prompt_engineering.py` | 3 kỹ thuật prompting: Zero-shot, Few-shot, CoT | Tuần 2 |
 | `prompt_engineering_log.txt` | Log output từ `prompt_engineering.py` | Tuần 2 |
 | `chat_memory.py` | Bộ nhớ hội thoại + `trim_history()` FIFO | Tuần 3 |
+| `chatbot/utils.py` | Module: đếm token, truncate text (tái sử dụng) | Tuần 4 |
+| `chatbot/llm_client.py` | Module: gọi API async với retry | Tuần 4 |
+| `chatbot/memory.py` | Module: ChatMemory class (OOP) | Tuần 4 |
+| `chatbot/main.py` | 🎯 **CLI Chatbot** - entry point (`python -m chatbot.main`) | Tuần 4 |
 | `list_models.py` | Liệt kê các models có sẵn trên Azure OpenAI | - |
 | `models.txt` | Danh sách models đã liệt kê | - |
 
